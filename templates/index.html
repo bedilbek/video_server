@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<HTML>
+<head>
+    <script src="{{ static_url("scripts/zingchart.min.js") }}" type="text/javascript"></script>
+    <script>
+        zingchart.MODULESDIR = "https://cdn.zingchart.com/modules/";
+        ZC.LICENSE = ["569d52cefae586f634c54f86dc99e6a9", "ee6b7db5b51705a13dc2339db3edaf6d"];
+    </script>
+    <link rel="stylesheet" href="{{ static_url("css/styles.css") }}">
+    <link rel="stylesheet" href="{{ static_url("css/slider.css") }}">
+    <style>
+
+        #heatmap {
+            position: absolute;
+            height: 100%;
+            width: 100%;
+            opacity: 0.7;
+            z-index: 1;
+            top: 0;
+        }
+    </style>
+</head>
+
+<body>
+<div id="header">
+    <form action="/uploader">
+    <input type="submit" value="Upload Video"/>
+    </form>
+    <h1> SeeAI - Class Insights Analytics</h1>
+
+</div>
+
+
+<div style="display: flex">
+    <div class="videoCon">
+        <h2 style="color: GrayText; z-index: 10" align="center">Source Video</h2>
+        <video id="main_video" controls onseeking="onSeek()" ontimeupdate="onSeek()">
+            <source src="{{ video_path }}" type="video/mp4">
+        </video>
+    </div>
+
+    <div class="videoCon">
+        <h2 style="color: GrayText; z-index: 25" align="center">HeatMap of Gaze on Whiteboard</h2>
+        <img id="video" src="{{ static_url("resources/whiteboard.jpg") }}"/>
+        <div id='heatmap'></div>
+    </div>
+</div>
+<div class="tabBody">
+    <div id="Contact" class="tabcontent">
+        <h2 style="color: GrayText" align="center">Overall Emotion of Audience over Time</h2>
+        <div id="seeker">
+        </div>
+        <div id='myChart'></div>
+        <script>
+            result = {{ emotion }};
+
+
+            angerData = result.map(function (element) {
+                return element['anger'];
+            });
+
+            contemptData = result.map(function (element) {
+                return element['contempt'];
+            });
+
+            disgustData = result.map(function (element) {
+                return element['anger'];
+            });
+
+            fearData = result.map(function (element) {
+                return element['fear'];
+            });
+
+            happinessData = result.map(function (element) {
+                return element['happiness'];
+            });
+
+            neutralData = result.map(function (element) {
+                return element['neutral'];
+            });
+
+            sadnessData = result.map(function (element) {
+                return element['sadness'];
+            });
+
+            surpriseData = result.map(function (element) {
+                return element['surprise'];
+            });
+
+
+            var myConfig = {
+                "type": "line",
+                "plot": {
+                    "aspect": "spline",
+                    "tooltip": {
+                        "text": "%t: %v",
+                        "font-color": "white",
+                        "font-family": "Google Sans",
+                        "font-size": 20,
+                        "font-weight": "bold",
+                        "font-style": "normal"
+                    }
+                },
+                "series": [{
+                    "name": "anger",
+                    "text": "anger",
+                    "values": angerData
+                }, {
+                    "name": "sadness",
+                    "text": "sadness",
+                    "values": sadnessData
+                }, {
+                    "name": "disgust",
+                    "text": "disgust",
+                    "values": disgustData
+                }, {
+                    "name": "contempt",
+                    "text": "contempt",
+                    "values": contemptData
+                }, {
+                    "name": "neutral",
+                    "text": "neutral",
+                    "values": neutralData
+                }, {
+                    "name": "happiness",
+                    "text": "happiness",
+                    "values": happinessData
+                }, {
+                    "name": 'fear',
+                    "text": "fear",
+                    "values": fearData
+                }, {
+                    "name": "surprise",
+                    "text": "surprise",
+                    "values": surpriseData
+                }]
+            };
+
+            zingchart.render({
+                id: 'myChart',
+                data: myConfig,
+            })
+        </script>
+    </div>
+    <script>
+
+        function openPage(pageName, elmnt, color) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tablink");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].style.backgroundColor = "";
+            }
+            document.getElementById(pageName).style.display = "block";
+            elmnt.style.backgroundColor = color;
+        }
+    </script>
+
+    <script>
+        // Make the DIV element draggable:
+        dragElement(document.getElementById("seeker"));
+        var isDragging = false
+        var main_video = document.getElementById("main_video")
+        var elmnt = document.getElementById("seeker")
+        var index = 0;
+
+        function onSeek() {
+            if (!isDragging) {
+                index = Math.floor(main_video.currentTime);
+                var myConfig = {
+                    "type": "heatmap",
+                    "plot": {
+                        "background-color": "red",
+                        "border-width": 2,
+                        "border-color": "orange",
+                        "line-style": "dotted",
+                        "border-radius": "0px",
+                        "hover-state": {
+                            "visible": false
+                        },
+                        "tooltip": {
+                            "padding": "0"
+                        },
+                    },
+                    "scaleX": {
+                        visible: false
+                    },
+                    "scaleY": {
+                        visible: false,
+                    },
+                    "series": a_objects[index]
+                };
+                zingchart.render({
+                    id: 'heatmap',
+                    data: myConfig,
+                    height: "100%",
+                    width: "100%"
+                });
+                var wrap = elmnt.parentElement;
+                elmnt.style.left = (wrap.offsetLeft + wrap.offsetWidth * main_video.currentTime / main_video.duration) + "px";
+            }
+        }
+
+        function dragElement(elmnt) {
+            var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            if (document.getElementById(elmnt.id + "header")) {
+                // if present, the header is where you move the DIV from:
+                document.getElementById(elmnt.id + "header").onmousedown = dragMouseDown;
+            } else {
+                // otherwise, move the DIV from anywhere inside the DIV:
+                elmnt.onmousedown = dragMouseDown;
+            }
+
+            function dragMouseDown(e) {
+                e = e || window.event;
+                e.preventDefault();
+                // get the mouse cursor position at startup:
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.onmouseup = closeDragElement;
+                // call a function whenever the cursor moves:
+                document.onmousemove = elementDrag;
+            }
+
+            function elementDrag(e) {
+                isDragging = true
+                e = e || window.event;
+                e.preventDefault();
+                // calculate the new cursor position:
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                // set the element's new position:
+                var left = elmnt.parentElement
+                if (left.offsetLeft <= elmnt.offsetLeft - pos1 &&
+                    left.offsetLeft + left.offsetWidth - elmnt.offsetWidth > elmnt.offsetLeft - pos1) {
+                    elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+                    main_video.currentTime = main_video.duration * (elmnt.offsetLeft / left.offsetWidth)
+                }
+            }
+
+            function closeDragElement() {
+                // stop moving when mouse button is released:
+                document.onmouseup = null;
+                document.onmousemove = null;
+                isDragging = false
+            }
+        }
+
+
+        a_objects = {{ gaze }};
+
+
+    </script>
+</div>
+</body>
+
+</HTML>
